@@ -1,5 +1,7 @@
 from Commands import *
+from Commands_Struct import *
 from tkinter import *
+from tkinter.filedialog import askopenfilename
 from functools import partial
 
 
@@ -48,6 +50,9 @@ class UserInterface:
         self.gui_select_button()
         self.gui_move_button()
         self.gui_resize_button()
+        self.gui_undo_button()
+        self.gui_redo_button()
+        self.gui_import_button()
 
         # shapes listbox
         self.gui_shapes_listbox()
@@ -79,7 +84,7 @@ class UserInterface:
         :param event
         """
         self.motion_end_coordinates = [event.x, event.y]
-        if self.commands.get_current_command() is Commands.COMMAND_CREATE:
+        if self.commands.get_current_command() is COMMAND_CREATE:
             if self.selected_shape is Rectangle.name:
                 rectangle = self.create(Rectangle.name, self.motion_start_coordinates + self.motion_end_coordinates)
                 self.shapes_list.insert(0, rectangle)  # do a push
@@ -88,11 +93,11 @@ class UserInterface:
                 ellipse = self.create(Ellipse.name, self.motion_start_coordinates + self.motion_end_coordinates)
                 self.shapes_list.insert(0, ellipse)  # do a push
                 self.shapes_listbox_add(Ellipse.name)
-        elif self.commands.get_current_command() is Commands.COMMAND_SELECT:
+        elif self.commands.get_current_command() is COMMAND_SELECT:
             self.select(event)
-        elif self.commands.get_current_command() is Commands.COMMAND_MOVE:
+        elif self.commands.get_current_command() is COMMAND_MOVE:
             self.move(event)
-        elif self.commands.get_current_command() is Commands.COMMAND_RESIZE:
+        elif self.commands.get_current_command() is COMMAND_RESIZE:
             self.resize(event)
 
     def key_down(self, event):
@@ -158,7 +163,7 @@ class UserInterface:
         :return:
         """
         button = Button(self.tool_frame, text='Select', bg='#b3b3b3',
-                        command=partial(self.set_command, Commands.COMMAND_SELECT))
+                        command=partial(self.set_command, COMMAND_SELECT))
         button.pack(fill=BOTH)
 
     def gui_shapes_listbox(self):
@@ -181,7 +186,7 @@ class UserInterface:
         :return:
         """
         button = Button(self.tool_frame, text='Move', bg='#b3b3b3',
-                        command=partial(self.set_command, Commands.COMMAND_MOVE))
+                        command=partial(self.set_command, COMMAND_MOVE))
         button.pack(fill=BOTH)
 
     def gui_resize_button(self):
@@ -190,7 +195,31 @@ class UserInterface:
         :return:
         """
         button = Button(self.tool_frame, text='Resize', bg='#b3b3b3',
-                        command=partial(self.set_command, Commands.COMMAND_RESIZE))
+                        command=partial(self.set_command, COMMAND_RESIZE))
+        button.pack(fill=BOTH)
+
+    def gui_undo_button(self):
+        """
+        Renders the Undo button
+        :return:
+        """
+        button = Button(self.tool_frame, text='Undo', bg='#b3b3b3', command=self.undo)
+        button.pack(fill=BOTH)
+
+    def gui_redo_button(self):
+        """
+        Renders the Undo button
+        :return:
+        """
+        button = Button(self.tool_frame, text='Redo', bg='#b3b3b3', command=self.redo)
+        button.pack(fill=BOTH)
+
+    def gui_import_button(self):
+        """
+        Renders the Import button
+        :return:
+        """
+        button = Button(self.tool_frame, text='Import', bg='#b3b3b3', command=self._import)
         button.pack(fill=BOTH)
 
     def shapes_listbox_get(self, event):
@@ -201,7 +230,7 @@ class UserInterface:
         """
         widget = event.widget
         index = int(widget.curselection()[0])
-        self.shapes_set_active(index)
+        self.shapes_set_active()
 
     def shapes_set_all_inactive(self):
         """
@@ -211,13 +240,15 @@ class UserInterface:
         for shape in range(0, self.shapes_listbox.size()):
             self.shapes_list[shape].set_inactive_state()
 
-    def shapes_set_active(self, index):
+    def shapes_set_active(self):
         """
         Sets shape at index to it's active state
-        :param index:
         :return:
         """
-        self.shapes_list[index].set_active_state()
+        for shape in self.selected_shape:
+            shapes_max_index = self.drawing_canvas.find_all()[0] + len(self.drawing_canvas.find_all()) - 1
+            shape_index = self.drawing_canvas.find_withtag(shape)[0]
+            self.shapes_list[shapes_max_index - shape_index].set_active_state()
 
     def shapes_listbox_add(self, shape):
         """
@@ -241,7 +272,7 @@ class UserInterface:
         :param shape:
         :return:
         """
-        self.commands.set_current_command(Commands.COMMAND_CREATE)
+        self.commands.set_current_command(COMMAND_CREATE)
         self.selected_shape = shape
 
     def create(self, shape, coordinates):
@@ -275,9 +306,7 @@ class UserInterface:
         else:
             self.selected_shape = [Commands.select(self.commands, [event.x, event.y])[self.TAG_ID]]
         self.shapes_set_all_inactive()
-        for shape in self.selected_shape:
-            self.shapes_set_active(
-                len(self.drawing_canvas.find_all()) - self.drawing_canvas.find_withtag(shape)[0])
+        self.shapes_set_active()
 
     def move(self, event):
         """
@@ -296,6 +325,30 @@ class UserInterface:
         """
         for shape in self.selected_shape:
             Commands.resize(self.commands, shape, [event.x, event.y])
+
+    def undo(self):
+        """
+        Handles the undo button click
+        :return:
+        """
+        Commands(self.drawing_canvas).undo()
+        self.shapes_set_active()
+
+    def redo(self):
+        """
+        Handles the redo button click
+        :return:
+        """
+        Commands(self.drawing_canvas).redo()
+        self.shapes_set_active()
+
+    def _import(self):
+        """
+        Handles the import button click
+        :return:
+        """
+        filename = askopenfilename()
+        Commands(self.drawing_canvas).import_(filename)
 
     def remove(self, shape):
         """

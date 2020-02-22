@@ -7,7 +7,7 @@ class Ellipse(Figure):
     name = 'ellipse'
     tag = None
 
-    def __init__(self, coordinates, canvas):
+    def __init__(self, coordinates, canvas, tag=None):
         """
         :param coordinates:
         :param canvas:
@@ -15,7 +15,12 @@ class Ellipse(Figure):
         super().__init__(canvas)
         self.coordinates = coordinates
         self.shape = 0
-        self.tag = self.name + str(id(self))
+
+        if tag is not None:
+            print(tag)
+            self.tag = tag
+        else:
+            self.tag = self.name + str(id(self))
 
     def draw(self):
         """
