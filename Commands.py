@@ -1,11 +1,14 @@
 from tkinter import ALL
 from Ellipse import *
 from Rectangle import *
+from Group import *
 from IO import *
 from Commands_Struct import *
 
 
 class Commands:
+    TAG_ID = 1
+
     # stack for redo/undo
     command_stack = []
     command_stack_pointer = 0
@@ -15,11 +18,12 @@ class Commands:
     canvas = None
     current_command = None
 
-    def __init__(self, canvas):
+    def __init__(self, canvas, current_shape_list):
         """
         :param canvas:
         """
         self.canvas = canvas
+        self.current_shape_list = current_shape_list
 
     def get_current_command(self):
         """
@@ -41,7 +45,6 @@ class Commands:
         :return:
         """
         args = (coordinates, self.canvas)
-
         if shape is Rectangle.name:
             rectangle = Rectangle(*args)
             rectangle.draw()
@@ -62,46 +65,73 @@ class Commands:
         """
         shape.draw()
 
-    def select(self, coordinates):
+    def select(self, coordinates, group_list):
         """
+        :param group_list:
         :param coordinates:
         :return:
         """
-        shape = self.canvas.find_closest(coordinates[0], coordinates[1])
-        return self.canvas.gettags(*shape)
+        closest_shape = self.canvas.find_closest(coordinates[0], coordinates[1])
+        if closest_shape:
+            selected_tag = self.canvas.gettags(*closest_shape)[self.TAG_ID]
+            shape_object = None
 
-    def move(self, shape, coordinates, push_to_command_stack=True):
+            for shape in self.current_shape_list:
+                if shape.tag == selected_tag:
+                    shape_object = shape
+
+            if not shape_object:
+                return None
+
+            for group in group_list:
+                for shape in group.get_all():
+                    if shape.tag == shape_object.tag:
+                        return group.get_all()
+
+            return [shape_object]
+        return None
+
+    def move(self, shapes_list, coordinates, push_to_command_stack=True):
         """
         :param push_to_command_stack:
-        :param shape:
+        :param shapes_list:
         :param coordinates:
         :return:
         """
-        if not shape:
-            return
-        if push_to_command_stack:
-            self.command_stack_push(COMMAND_MOVE, shape, coordinates, False)
-        current_coordinates = self.canvas.coords(shape)
-        self.canvas.move(shape, coordinates[0] - current_coordinates[0], coordinates[1] - current_coordinates[1])
+        if not shapes_list:
+            return False
 
-    def resize(self, shape, coordinates, push_to_command_stack=True):
+        if push_to_command_stack:
+            self.command_stack_push(COMMAND_MOVE, shapes_list, coordinates, False)
+
+        for shape in shapes_list:
+            current_coordinates = self.canvas.coords(shape.tag)
+            if not current_coordinates:
+                continue
+
+            self.canvas.move(shape.tag, coordinates[0] - current_coordinates[0], coordinates[1] - current_coordinates[1])
+
+    def resize(self, shape_list, coordinates, push_to_command_stack=True):
         """
         this was literally done by trail and error, thanks to the poor documentation of tkinter
         :param push_to_command_stack:
-        :param shape:
+        :param shape_list:
         :param coordinates:
         :return:
         """
-        if not shape:
-            return
+        if not shape_list:
+            return False
+
         if push_to_command_stack:
-            self.command_stack_push(COMMAND_RESIZE, shape, coordinates, False)
-        (x0, y0, x1, y1) = self.canvas.coords(shape)
-        width = x0 / coordinates[0]
-        height = y0 / coordinates[1]
-        x1 = x0 / width
-        y1 = y0 / height
-        self.canvas.coords(shape, x0, y0, x1, y1)
+            self.command_stack_push(COMMAND_RESIZE, shape_list, coordinates, False)
+
+        for shape in shape_list:
+            (x0, y0, x1, y1) = self.canvas.coords(shape.tag)
+            width = x0 / coordinates[0]
+            height = y0 / coordinates[1]
+            x1 = x0 / width
+            y1 = y0 / height
+            self.canvas.coords(shape.tag, x0, y0, x1, y1)
 
     def command_stack_push(self, command_name, *args):
         """
@@ -138,10 +168,26 @@ class Commands:
         """
         commands = IO(filename).parse_file()
         for command in commands:
-            print(command)
             command_name = command[0]
             command_args = command[1:]
             getattr(self, command_name)(*command_args)
+
+    def group(self, shapes, push_to_command_stack=True):
+        """
+        Handles the group command
+        :param push_to_command_stack:
+        :param shapes:
+        :return:
+        """
+        if not shapes:
+            return False
+
+        group = Group(self.canvas)
+        for shape in shapes:
+            group.add(shape)
+        if push_to_command_stack:
+            self.command_stack_push(COMMAND_GROUP, shapes, False)
+        return group
 
     def redraw_canvas(self):
         """

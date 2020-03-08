@@ -18,9 +18,9 @@ class UserInterface:
     # Selection helpers
     current_command = None
     selected_shape = None
-    is_multi_selection = False
     commands = None
     shapes_list = []
+    group_list = []
 
     # drag start and stop coordinates
     motion_start_coordinates = [0, 0]
@@ -53,6 +53,7 @@ class UserInterface:
         self.gui_undo_button()
         self.gui_redo_button()
         self.gui_import_button()
+        self.gui_group_button()
 
         # shapes listbox
         self.gui_shapes_listbox()
@@ -67,8 +68,6 @@ class UserInterface:
         """
         self.drawing_canvas.bind('<Button-1>', self.mouse_button_down)
         self.drawing_canvas.bind('<ButtonRelease-1>', self.mouse_button_up)
-        self.master.bind('<KeyPress>', self.key_down)
-        self.master.bind('<KeyRelease>', self.key_up)
 
     def mouse_button_down(self, event):
         """
@@ -100,24 +99,6 @@ class UserInterface:
         elif self.commands.get_current_command() is COMMAND_RESIZE:
             self.resize(event)
 
-    def key_down(self, event):
-        """
-        Handles the key press down event
-        :param event:
-        :return None:
-        """
-        if event.keycode == 16:  # right of left shift
-            self.is_multi_selection = True
-
-    def key_up(self, event):
-        """
-        Handles the key press up event
-        :param event:
-        :return None:
-        """
-        if event.keycode == 16:  # right of left shift
-            self.is_multi_selection = False
-
     def create_tool_frame(self):
         """
         Renders a frame for the tool buttons to be stored in
@@ -137,7 +118,7 @@ class UserInterface:
         self.drawing_frame.pack(side=RIGHT, expand=0)
         self.drawing_canvas = Canvas(self.drawing_frame)
         self.drawing_canvas.pack(fill=BOTH, expand=1)
-        self.commands = Commands(self.drawing_canvas)
+        self.commands = Commands(self.drawing_canvas, self.shapes_list)
 
     def gui_rectangle_button(self):
         """
@@ -222,14 +203,19 @@ class UserInterface:
         button = Button(self.tool_frame, text='Import', bg='#b3b3b3', command=self._import)
         button.pack(fill=BOTH)
 
-    def shapes_listbox_get(self, event):
+    def gui_group_button(self):
         """
-        Handles the user click in the listbox, finds the shape and set the active state
-        :param event:
+        Renders the Group button
         :return:
         """
-        widget = event.widget
-        index = int(widget.curselection()[0])
+        button = Button(self.tool_frame, text='Group', bg='#b3b3b3', command=self.group)
+        button.pack(fill=BOTH)
+
+    def shapes_listbox_get(self):
+        """
+        Handles the user click in the listbox, finds the shape and set the active state
+        :return:
+        """
         self.shapes_set_active()
 
     def shapes_set_all_inactive(self):
@@ -247,7 +233,7 @@ class UserInterface:
         """
         for shape in self.selected_shape:
             shapes_max_index = self.drawing_canvas.find_all()[0] + len(self.drawing_canvas.find_all()) - 1
-            shape_index = self.drawing_canvas.find_withtag(shape)[0]
+            shape_index = self.drawing_canvas.find_withtag(shape.tag)[0]
             self.shapes_list[shapes_max_index - shape_index].set_active_state()
 
     def shapes_listbox_add(self, shape):
@@ -299,12 +285,15 @@ class UserInterface:
         :param event:
         :return:
         """
-        if self.is_multi_selection:
-            if isinstance(self.selected_shape, str):
-                self.selected_shape = []  # parse to list to allow multi selection
-            self.selected_shape += [Commands.select(self.commands, [event.x, event.y])[self.TAG_ID]]
-        else:
-            self.selected_shape = [Commands.select(self.commands, [event.x, event.y])[self.TAG_ID]]
+        if isinstance(self.selected_shape, str):
+            self.selected_shape = []
+
+        selected_shapes = Commands(self.drawing_canvas, self.shapes_list).select([event.x, event.y], self.group_list)
+        for selected_shape in selected_shapes:
+            if selected_shape in self.selected_shape:
+                self.selected_shape.remove(selected_shape)
+            else:
+                self.selected_shape.append(selected_shape)
         self.shapes_set_all_inactive()
         self.shapes_set_active()
 
@@ -314,8 +303,7 @@ class UserInterface:
         :param event:
         :return:
         """
-        for shape in self.selected_shape:
-            Commands.move(self.commands, shape, [event.x, event.y])
+        Commands(self.drawing_canvas, self.shapes_list).move(self.selected_shape, [event.x, event.y])
 
     def resize(self, event):
         """
@@ -323,24 +311,23 @@ class UserInterface:
         :param event:
         :return:
         """
-        for shape in self.selected_shape:
-            Commands.resize(self.commands, shape, [event.x, event.y])
+        Commands(self.drawing_canvas, self.shapes_list).resize(self.selected_shape, [event.x, event.y])
 
     def undo(self):
         """
         Handles the undo button click
+        Needs a predefined class instance to manipulate stack pointer
         :return:
         """
-        Commands(self.drawing_canvas).undo()
-        self.shapes_set_active()
+        self.commands.undo()
 
     def redo(self):
         """
         Handles the redo button click
+        Needs a predefined class instance to manipulate stack pointer
         :return:
         """
-        Commands(self.drawing_canvas).redo()
-        self.shapes_set_active()
+        self.commands.redo()
 
     def _import(self):
         """
@@ -348,7 +335,14 @@ class UserInterface:
         :return:
         """
         filename = askopenfilename()
-        Commands(self.drawing_canvas).import_(filename)
+        Commands(self.drawing_canvas, self.shapes_list).import_(filename)
+
+    def group(self):
+        """
+        Handles the group button click
+        :return:
+        """
+        self.group_list.append(Commands(self.drawing_canvas, self.shapes_list).group(self.selected_shape))
 
     def remove(self, shape):
         """
