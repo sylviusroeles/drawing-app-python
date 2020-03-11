@@ -29,3 +29,10 @@ class Group(Figure):
         :return:
         """
         return self.shapes
+
+    def draw(self):
+        """
+        :return:
+        """
+        for shape in self.shapes:
+            shape.draw()

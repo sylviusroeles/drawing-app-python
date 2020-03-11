@@ -223,8 +223,8 @@ class UserInterface:
         Sets all shapes to their inactive state
         :return:
         """
-        for shape in range(0, self.shapes_listbox.size()):
-            self.shapes_list[shape].set_inactive_state()
+        for shape in self.shapes_list:
+            shape.set_inactive_state()
 
     def shapes_set_active(self):
         """
@@ -232,9 +232,7 @@ class UserInterface:
         :return:
         """
         for shape in self.selected_shape:
-            shapes_max_index = self.drawing_canvas.find_all()[0] + len(self.drawing_canvas.find_all()) - 1
-            shape_index = self.drawing_canvas.find_withtag(shape.tag)[0]
-            self.shapes_list[shapes_max_index - shape_index].set_active_state()
+            shape.set_active_state()
 
     def shapes_listbox_add(self, shape):
         """
@@ -285,7 +283,7 @@ class UserInterface:
         :param event:
         :return:
         """
-        if isinstance(self.selected_shape, str):
+        if isinstance(self.selected_shape, str) or self.selected_shape is None:
             self.selected_shape = []
 
         selected_shapes = Commands(self.drawing_canvas, self.shapes_list).select([event.x, event.y], self.group_list)
@@ -335,7 +333,12 @@ class UserInterface:
         :return:
         """
         filename = askopenfilename()
-        Commands(self.drawing_canvas, self.shapes_list).import_(filename)
+        shapes = Commands(self.drawing_canvas, self.shapes_list).import_(filename)
+        for shape in shapes:
+            if isinstance(shape, Group):
+                self.group_list.append(shape)
+            else:
+                self.shapes_list.append(shape)
 
     def group(self):
         """

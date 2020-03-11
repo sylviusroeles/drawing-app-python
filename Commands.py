@@ -1,22 +1,9 @@
 from tkinter import ALL
-from Ellipse import *
-from Rectangle import *
-from Group import *
 from IO import *
 from Commands_Struct import *
 
 
 class Commands:
-    TAG_ID = 1
-
-    # stack for redo/undo
-    command_stack = []
-    command_stack_pointer = 0
-    command_stack_name_index = 0
-    command_stack_args_index = 1
-
-    canvas = None
-    current_command = None
 
     def __init__(self, canvas, current_shape_list):
         """
@@ -24,6 +11,15 @@ class Commands:
         """
         self.canvas = canvas
         self.current_shape_list = current_shape_list
+        self.TAG_ID = 1
+
+        # stack for redo/undo
+        self.command_stack = []
+        self.command_stack_pointer = 0
+        self.command_stack_name_index = 0
+        self.command_stack_args_index = 1
+
+        self.current_command = None
 
     def get_current_command(self):
         """
@@ -86,6 +82,7 @@ class Commands:
             for group in group_list:
                 for shape in group.get_all():
                     if shape.tag == shape_object.tag:
+                        print(group.get_all())
                         return group.get_all()
 
             return [shape_object]
@@ -109,7 +106,8 @@ class Commands:
             if not current_coordinates:
                 continue
 
-            self.canvas.move(shape.tag, coordinates[0] - current_coordinates[0], coordinates[1] - current_coordinates[1])
+            self.canvas.move(
+                shape.tag, coordinates[0] - current_coordinates[0], coordinates[1] - current_coordinates[1])
 
     def resize(self, shape_list, coordinates, push_to_command_stack=True):
         """
@@ -166,11 +164,15 @@ class Commands:
         Handles the import command
         :return:
         """
-        commands = IO(filename).parse_file()
-        for command in commands:
-            command_name = command[0]
-            command_args = command[1:]
-            getattr(self, command_name)(*command_args)
+        shapes = IO(filename, self.canvas).parse_file()
+        for shape in shapes:
+            if isinstance(shape, Group):
+                for _shape in shape.get_all():
+                    self.current_shape_list.append(_shape)
+            else:
+                self.current_shape_list.append(shape)
+            shape.draw()
+        return shapes
 
     def group(self, shapes, push_to_command_stack=True):
         """

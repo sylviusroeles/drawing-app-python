@@ -1,0 +1,8 @@
+group 2
+    ellipse 100 100 20 50
+    group 3
+        rectangle 10 20 100 100
+        group 2
+            ellipse 50 150 20 50
+            ellipse 70 150 20 50
+        rectangle 100 100 10 10
