@@ -207,8 +207,8 @@ class TestCommands(unittest.TestCase):
     def test_function_import__with_no_file_should_do_nothing(self):
         canvas = Canvas()
         canvas.pack()
-        output = Commands(canvas, []).import_('non_existing_file.txt')
-        self.assertIsNone(output)
+        commands = Commands(canvas, [])
+        self.assertRaises(FileNotFoundError, commands.import_, 'non_existing_file.txt')
 
     def test_function_import__with_file_3_shapes_txt_should_draw_3_shapes(self):
         canvas = Canvas()
@@ -232,6 +232,33 @@ class TestCommands(unittest.TestCase):
         self.assertEqual(3, len(group_list))
         shape = commands.select([200, 200], group_list)
         self.assertIsNotNone(shape)
+
+    def test_function_export__with_no_shapes_should_return_empty_string(self):
+        canvas = Canvas()
+        canvas.pack()
+        commands = Commands(canvas, [])
+        output = commands.export_()
+        self.assertEqual("", output)
+
+    def test_function_export__after_function_import__with_file_3_shapes_should_yield_same_file(self):
+        canvas = Canvas()
+        canvas.pack()
+        shapes = Commands(canvas, []).import_('3_shapes.txt')
+        self.assertEqual(3, len(canvas.find_all()))
+        output = Commands(canvas, shapes).export_()
+        with open('3_shapes.txt') as f:
+            _input = f.read()
+        self.assertEqual(output, _input)
+
+    def test_function_export__after_function_import__with_file_shapes_and_groups_should_yield_same_file(self):
+        canvas = Canvas()
+        canvas.pack()
+        shapes = Commands(canvas, []).import_('shapes_and_groups.txt')
+        self.assertEqual(5, len(canvas.find_all()))
+        output = Commands(canvas, shapes).export_()
+        with open('shapes_and_groups.txt') as f:
+            _input = f.read()
+        self.assertEqual(len(output.split('\n')), len(_input.split('\n')))
 
 
 if __name__ == '__main__':

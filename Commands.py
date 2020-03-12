@@ -1,4 +1,6 @@
 from tkinter import ALL
+from Move import *
+from Resize import *
 from IO import *
 from Commands_Struct import *
 
@@ -82,7 +84,6 @@ class Commands:
             for group in group_list:
                 for shape in group.get_all():
                     if shape.tag == shape_object.tag:
-                        print(group.get_all())
                         return group.get_all()
 
             return [shape_object]
@@ -102,12 +103,7 @@ class Commands:
             self.command_stack_push(COMMAND_MOVE, shapes_list, coordinates, False)
 
         for shape in shapes_list:
-            current_coordinates = self.canvas.coords(shape.tag)
-            if not current_coordinates:
-                continue
-
-            self.canvas.move(
-                shape.tag, coordinates[0] - current_coordinates[0], coordinates[1] - current_coordinates[1])
+            shape.accept(Move(coordinates))
 
     def resize(self, shape_list, coordinates, push_to_command_stack=True):
         """
@@ -129,7 +125,7 @@ class Commands:
             height = y0 / coordinates[1]
             x1 = x0 / width
             y1 = y0 / height
-            self.canvas.coords(shape.tag, x0, y0, x1, y1)
+            shape.accept(Resize([x0, y0, x1, y1]))
 
     def command_stack_push(self, command_name, *args):
         """
@@ -164,15 +160,21 @@ class Commands:
         Handles the import command
         :return:
         """
-        shapes = IO(filename, self.canvas).parse_file()
+        shapes = IO(self.canvas).parse_file(filename)
         for shape in shapes:
             if isinstance(shape, Group):
                 for _shape in shape.get_all():
+                    if isinstance(_shape, Group) or _shape.tag is None:
+                        continue
+                    _shape.draw()
                     self.current_shape_list.append(_shape)
             else:
                 self.current_shape_list.append(shape)
-            shape.draw()
+                shape.draw()
         return shapes
+
+    def export_(self):
+        return IO(self.canvas).shapes_to_text(self.current_shape_list)
 
     def group(self, shapes, push_to_command_stack=True):
         """

@@ -1,7 +1,7 @@
 from Commands import *
 from Commands_Struct import *
 from tkinter import *
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askopenfilename, asksaveasfile
 from functools import partial
 
 
@@ -53,6 +53,7 @@ class UserInterface:
         self.gui_undo_button()
         self.gui_redo_button()
         self.gui_import_button()
+        self.gui_export_button()
         self.gui_group_button()
 
         # shapes listbox
@@ -203,6 +204,14 @@ class UserInterface:
         button = Button(self.tool_frame, text='Import', bg='#b3b3b3', command=self._import)
         button.pack(fill=BOTH)
 
+    def gui_export_button(self):
+        """
+        Renders the Export button
+        :return:
+        """
+        button = Button(self.tool_frame, text='Export', bg='#b3b3b3', command=self._export)
+        button.pack(fill=BOTH)
+
     def gui_group_button(self):
         """
         Renders the Group button
@@ -339,6 +348,14 @@ class UserInterface:
                 self.group_list.append(shape)
             else:
                 self.shapes_list.append(shape)
+
+    def _export(self):
+        file = asksaveasfile('w', defaultextension='.txt')
+        if file is None:
+            return
+        shapes = Commands(self.drawing_canvas, self.shapes_list).export_()
+        file.write(shapes)
+        file.close()
 
     def group(self):
         """
