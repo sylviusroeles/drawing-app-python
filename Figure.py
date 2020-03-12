@@ -1,3 +1,4 @@
+from Strategy import *
 
 
 class Figure:
@@ -37,6 +38,9 @@ class Figure:
         )
         self.coordinates[0] = coordinates[0]
         self.coordinates[1] = coordinates[1]
+
+    def draw(self):
+        Strategy(self.name, self.draw()).execute()
 
     def resize(self, visitor):
         """
