@@ -3,6 +3,8 @@ from Commands_Struct import *
 from tkinter import *
 from tkinter.filedialog import askopenfilename, asksaveasfile
 from functools import partial
+from Rectangle import *
+from Ellipse import *
 
 
 class UserInterface:

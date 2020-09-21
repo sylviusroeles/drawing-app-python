@@ -3,9 +3,14 @@ from Move import *
 from Resize import *
 from IO import *
 from Commands_Struct import *
+from Ellipse import *
+from Rectangle import *
 
 
 class Commands:
+
+    ellipse = Ellipse
+    rectangle = Rectangle
 
     def __init__(self, canvas, current_shape_list):
         """
@@ -44,12 +49,12 @@ class Commands:
         """
         args = (coordinates, self.canvas)
         if shape is Rectangle.name:
-            rectangle = Rectangle(*args)
+            rectangle = Figure(*args, 'rectangle', self.rectangle)
             rectangle.draw()
             self.command_stack_push(COMMAND_REDRAW, rectangle)
             return rectangle
         elif shape is Ellipse.name:
-            ellipse = Ellipse(*args)
+            ellipse = Figure(*args, 'ellipse', self.ellipse)
             ellipse.draw()
             self.command_stack_push(COMMAND_REDRAW, ellipse)
             return ellipse
@@ -82,12 +87,18 @@ class Commands:
                 return None
 
             for group in group_list:
-                for shape in group.get_all():
-                    if shape.tag == shape_object.tag:
-                        return group.get_all()
+                self.get_shape_in_nested_group(group, shape_object)
 
             return [shape_object]
         return None
+
+    def get_shape_in_nested_group(self, group, shape_object):
+        for shape in group.get_all():
+            if isinstance(shape, Group):
+                self.get_shape_in_nested_group(shape, shape_object)
+            elif shape.tag == shape_object.tag:
+                return group.get_all()
+
 
     def move(self, shapes_list, coordinates, push_to_command_stack=True):
         """

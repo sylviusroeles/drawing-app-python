@@ -1,12 +1,21 @@
 from Strategy import *
 
-
 class Figure:
-    def __init__(self, canvas):
+
+    name = None
+    tag = None
+    coordinates = None
+    shape = None
+
+    def __init__(self, coordinates, canvas, name, shape):
         """
         :param canvas:
         """
         self.canvas = canvas
+        self.name = name
+        self.tag = self.name + str(id(self))
+        self.shape = shape
+        self.coordinates = coordinates
 
     def accept(self, visitor):
         return visitor.visit(self)
@@ -40,7 +49,11 @@ class Figure:
         self.coordinates[1] = coordinates[1]
 
     def draw(self):
-        Strategy(self.name, self.draw()).execute()
+        """
+        Executes the strategy pattern to draw a shape
+        :return:
+        """
+        Strategy(self, self.shape.draw).execute()
 
     def resize(self, visitor):
         """

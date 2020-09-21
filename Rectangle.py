@@ -5,21 +5,6 @@ from tkinter import BOTH
 class Rectangle(Figure):
 
     name = 'rectangle'
-    tag = None
-
-    def __init__(self, coordinates, canvas, tag=None):
-        """
-        :param coordinates:
-        :param canvas:
-        """
-        super().__init__(canvas)
-        self.coordinates = coordinates
-        self.shape = 0
-
-        if tag is not None:
-            self.tag = tag
-        else:
-            self.tag = self.name + str(id(self))
 
     def draw(self):
         """

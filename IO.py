@@ -102,13 +102,12 @@ class IO:
     def parse_coordinates(coordinates):
         """
         Parses coordinates to Tkinter x, y, x1, y1 instead of x, y, width, height
-        :param backwards:
         :param coordinates:
         :return:
         """
         return [
-            coordinates[0],
-            coordinates[1],
-            str(int(coordinates[0]) + int(coordinates[2])),
-            str(int(coordinates[1]) + int(coordinates[3])),
+            int(coordinates[0]),
+            int(coordinates[1]),
+            int(str(int(coordinates[0]) + int(coordinates[2]))),
+            int(str(int(coordinates[1]) + int(coordinates[3]))),
         ]
