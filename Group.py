@@ -7,7 +7,7 @@ class Group(Figure):
         """
         :param canvas:
         """
-        super().__init__(canvas)
+        super().__init__(None, canvas, 'group', None)
         self.shapes = []
 
     def add(self, shape):

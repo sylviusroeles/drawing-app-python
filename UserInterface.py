@@ -16,6 +16,9 @@ class UserInterface:
     drawing_canvas = None
     drawing_frame = None
     shapes_listbox = None
+    description_dialog_box = None
+    description_input = None
+    description_position = None
 
     # Selection helpers
     current_command = None
@@ -57,6 +60,7 @@ class UserInterface:
         self.gui_import_button()
         self.gui_export_button()
         self.gui_group_button()
+        self.gui_description_button()
 
         # shapes listbox
         self.gui_shapes_listbox()
@@ -222,6 +226,14 @@ class UserInterface:
         button = Button(self.tool_frame, text='Group', bg='#b3b3b3', command=self.group)
         button.pack(fill=BOTH)
 
+    def gui_description_button(self):
+        """
+        Renders the Description button
+        :return:
+        """
+        button = Button(self.tool_frame, text='Description', bg='#b3b3b3', command=self.description_dialog)
+        button.pack(fill=BOTH)
+
     def shapes_listbox_get(self):
         """
         Handles the user click in the listbox, finds the shape and set the active state
@@ -298,6 +310,7 @@ class UserInterface:
             self.selected_shape = []
 
         selected_shapes = Commands(self.drawing_canvas, self.shapes_list).select([event.x, event.y], self.group_list)
+        print(selected_shapes)
         for selected_shape in selected_shapes:
             if selected_shape in self.selected_shape:
                 self.selected_shape.remove(selected_shape)
@@ -365,6 +378,43 @@ class UserInterface:
         :return:
         """
         self.group_list.append(Commands(self.drawing_canvas, self.shapes_list).group(self.selected_shape))
+
+    def description_dialog(self):
+        """
+        Opens a dialog box to enter a description and a position for that description
+        :return:
+        """
+        if not isinstance(self.selected_shape, list):
+            return
+
+        self.description_dialog_box = Toplevel(self.master)
+
+        description_label = Label(self.description_dialog_box, text='Description')
+        description_label.pack()
+
+        self.description_input = Entry(self.description_dialog_box)
+        self.description_input.pack()
+
+        position_label = Label(self.description_dialog_box, text='Position')
+        position_label.pack()
+
+        position_options = {'Left', 'Right', 'Top', 'Bottom'}
+        self.description_position = StringVar(self.description_dialog_box)
+        self.description_position.set('Bottom')
+        option_menu = OptionMenu(self.description_dialog_box, self.description_position, *position_options)
+        option_menu.pack()
+
+        submit = Button(self.description_dialog_box, text='Submit', command=self.description)
+        submit.pack()
+
+    def description(self):
+        """
+        Handles the description
+        :return:
+        """
+        Commands(self.drawing_canvas, self.shapes_list).description(self.selected_shape, self.description_input.get(),
+                                                                    self.description_position.get())
+        self.description_dialog_box.destroy()
 
     def remove(self, shape):
         """

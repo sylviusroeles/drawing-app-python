@@ -87,17 +87,24 @@ class Commands:
                 return None
 
             for group in group_list:
-                self.get_shape_in_nested_group(group, shape_object)
+                return self.get_shape_in_nested_group(group, shape_object)
 
             return [shape_object]
         return None
 
     def get_shape_in_nested_group(self, group, shape_object):
+        """
+        Gets a shape from nested groups
+        :param group:
+        :param shape_object:
+        :return:
+        """
         for shape in group.get_all():
             if isinstance(shape, Group):
                 self.get_shape_in_nested_group(shape, shape_object)
             elif shape.tag == shape_object.tag:
                 return group.get_all()
+        return [shape_object]
 
 
     def move(self, shapes_list, coordinates, push_to_command_stack=True):
@@ -214,3 +221,15 @@ class Commands:
             command_name = command[self.command_stack_name_index]
             command_args = command[self.command_stack_args_index]
             getattr(self, command_name)(*command_args)
+
+    def description(self, selected_shape, description, position, push_to_command_stack=True):
+        """
+        :param push_to_command_stack:
+        :param selected_shape:
+        :param description:
+        :param position:
+        :return:
+        """
+        print(selected_shape, description, position)
+        if push_to_command_stack:
+            self.command_stack_push(COMMAND_DESCRIPTION, selected_shape, description, position, False)
