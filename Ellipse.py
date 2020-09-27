@@ -4,7 +4,7 @@ from tkinter import BOTH
 
 class Ellipse(Figure):
 
-    name = 'ellipse'
+    shapeName = 'ellipse'
 
     def draw(self):
         """

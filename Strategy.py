@@ -1,19 +1,22 @@
-import types
+import abc
 
+class Strategy(object):
 
-class Strategy:
+    __metaclass__ = abc.ABCMeta
 
-    execute = None
-
-    def __init__(self, name, function):
+    @abc.abstractmethod
+    def execute(self, shape):
         """
-        Sets the function to execute for the shape
-        :param name:
-        :param function:
+        Master method
+        :return:
         """
-        self.name = name
-        if function:
-            self.execute = types.MethodType(function, name)
 
-    def to_string(self):
-        print(self.name)
+class RectangleStrategy(Strategy):
+
+    def execute(self, shape):
+        return shape.draw()
+
+class EllipseStrategy(Strategy):
+
+    def execute(self, shape):
+        return shape.draw()

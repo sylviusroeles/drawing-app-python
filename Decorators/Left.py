@@ -1,17 +1,12 @@
-import Decorators.Description as Description
+from Decorators.Description import Description
 
 
 class Left(Description):
 
-    _words = None
+    _description = None
 
-    def __init__(self, description, words):
-        Description.__init__(self, description)
-        self._words = words
+    def __init__(self, description):
+        self._description = description
 
-    @staticmethod
-    def position():
-        return 'left'
-
-    def get_description(self):
-        return self.description.get_description() + ...[{self.position(): self._words}]
+    def render(self):
+        return {"Left": self._description.render()}

@@ -5,6 +5,8 @@ from tkinter.filedialog import askopenfilename, asksaveasfile
 from functools import partial
 from Rectangle import *
 from Ellipse import *
+from Group import *
+from IO import *
 
 
 class UserInterface:
@@ -91,12 +93,12 @@ class UserInterface:
         """
         self.motion_end_coordinates = [event.x, event.y]
         if self.commands.get_current_command() is COMMAND_CREATE:
-            if self.selected_shape is Rectangle.name:
-                rectangle = self.create(Rectangle.name, self.motion_start_coordinates + self.motion_end_coordinates)
+            if self.selected_shape is Rectangle.shapeName:
+                rectangle = self.create(Rectangle.shapeName, self.motion_start_coordinates + self.motion_end_coordinates)
                 self.shapes_list.insert(0, rectangle)  # do a push
                 self.shapes_listbox_add(Rectangle.name)
-            elif self.selected_shape is Ellipse.name:
-                ellipse = self.create(Ellipse.name, self.motion_start_coordinates + self.motion_end_coordinates)
+            elif self.selected_shape is Ellipse.shapeName:
+                ellipse = self.create(Ellipse.shapeName, self.motion_start_coordinates + self.motion_end_coordinates)
                 self.shapes_list.insert(0, ellipse)  # do a push
                 self.shapes_listbox_add(Ellipse.name)
         elif self.commands.get_current_command() is COMMAND_SELECT:
@@ -133,7 +135,7 @@ class UserInterface:
         :return:
         """
         button = Button(self.tool_frame, text='Rectangle', bg='#b3b3b3',
-                        command=partial(self.set_shape, Rectangle.name))
+                        command=partial(self.set_shape, Rectangle.shapeName))
         button.pack(fill=BOTH)
 
     def gui_ellipse_button(self):
@@ -142,7 +144,7 @@ class UserInterface:
         :return:
         """
         button = Button(self.tool_frame, text='Ellipse', bg='#b3b3b3',
-                        command=partial(self.set_shape, Ellipse.name))
+                        command=partial(self.set_shape, Ellipse.shapeName))
         button.pack(fill=BOTH)
 
     def gui_select_button(self):
@@ -309,8 +311,11 @@ class UserInterface:
         if isinstance(self.selected_shape, str) or self.selected_shape is None:
             self.selected_shape = []
 
-        selected_shapes = Commands(self.drawing_canvas, self.shapes_list).select([event.x, event.y], self.group_list)
-        print(selected_shapes)
+        selected_shapes = self.commands.set_current_shape_list(self.shapes_list).select([event.x, event.y], self.group_list)
+
+        if not selected_shapes:
+            return
+
         for selected_shape in selected_shapes:
             if selected_shape in self.selected_shape:
                 self.selected_shape.remove(selected_shape)
@@ -325,7 +330,7 @@ class UserInterface:
         :param event:
         :return:
         """
-        Commands(self.drawing_canvas, self.shapes_list).move(self.selected_shape, [event.x, event.y])
+        self.commands.set_current_shape_list(self.shapes_list).move(self.selected_shape, [event.x, event.y])
 
     def resize(self, event):
         """
@@ -333,7 +338,7 @@ class UserInterface:
         :param event:
         :return:
         """
-        Commands(self.drawing_canvas, self.shapes_list).resize(self.selected_shape, [event.x, event.y])
+        self.commands.set_current_shape_list(self.shapes_list).resize(self.selected_shape, [event.x, event.y])
 
     def undo(self):
         """
@@ -357,7 +362,7 @@ class UserInterface:
         :return:
         """
         filename = askopenfilename()
-        shapes = Commands(self.drawing_canvas, self.shapes_list).import_(filename)
+        shapes = self.commands.set_current_shape_list(self.shapes_list).import_(filename)
         for shape in shapes:
             if isinstance(shape, Group):
                 self.group_list.append(shape)
@@ -368,7 +373,7 @@ class UserInterface:
         file = asksaveasfile('w', defaultextension='.txt')
         if file is None:
             return
-        shapes = Commands(self.drawing_canvas, self.shapes_list).export_()
+        shapes = self.commands.set_current_shape_list(self.shapes_list).export_()
         file.write(shapes)
         file.close()
 
@@ -377,7 +382,7 @@ class UserInterface:
         Handles the group button click
         :return:
         """
-        self.group_list.append(Commands(self.drawing_canvas, self.shapes_list).group(self.selected_shape))
+        self.group_list.append(self.commands.set_current_shape_list(self.shapes_list).group(self.selected_shape))
 
     def description_dialog(self):
         """
@@ -412,7 +417,7 @@ class UserInterface:
         Handles the description
         :return:
         """
-        Commands(self.drawing_canvas, self.shapes_list).description(self.selected_shape, self.description_input.get(),
+        self.commands.set_current_shape_list(self.shapes_list).description(self.selected_shape, self.description_input.get(),
                                                                     self.description_position.get())
         self.description_dialog_box.destroy()
 

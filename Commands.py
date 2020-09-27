@@ -1,4 +1,10 @@
 from tkinter import ALL
+
+from Decorators.Left import Left
+from Decorators.Right import Right
+from Decorators.Description import Description
+from Decorators.Top import Top
+from Decorators.Bottom import Bottom
 from Move import *
 from Resize import *
 from IO import *
@@ -9,8 +15,8 @@ from Rectangle import *
 
 class Commands:
 
-    ellipse = Ellipse
-    rectangle = Rectangle
+    rectangle = Rectangle()
+    ellipse = Ellipse()
 
     def __init__(self, canvas, current_shape_list):
         """
@@ -27,6 +33,10 @@ class Commands:
         self.command_stack_args_index = 1
 
         self.current_command = None
+
+    def set_current_shape_list(self, shape_list):
+        self.current_shape_list = shape_list
+        return self
 
     def get_current_command(self):
         """
@@ -48,13 +58,15 @@ class Commands:
         :return:
         """
         args = (coordinates, self.canvas)
-        if shape is Rectangle.name:
+        if shape is Rectangle.shapeName:
             rectangle = Figure(*args, 'rectangle', self.rectangle)
+            rectangle.strategy = RectangleStrategy()
             rectangle.draw()
             self.command_stack_push(COMMAND_REDRAW, rectangle)
             return rectangle
-        elif shape is Ellipse.name:
+        elif shape is Ellipse.shapeName:
             ellipse = Figure(*args, 'ellipse', self.ellipse)
+            ellipse.strategy = EllipseStrategy()
             ellipse.draw()
             self.command_stack_push(COMMAND_REDRAW, ellipse)
             return ellipse
@@ -179,16 +191,19 @@ class Commands:
         :return:
         """
         shapes = IO(self.canvas).parse_file(filename)
+        self.current_shape_list += shapes
         for shape in shapes:
             if isinstance(shape, Group):
                 for _shape in shape.get_all():
                     if isinstance(_shape, Group) or _shape.tag is None:
                         continue
                     _shape.draw()
-                    self.current_shape_list.append(_shape)
+                    if _shape.descriptions is not None:
+                        _shape.render_description()
             else:
-                self.current_shape_list.append(shape)
                 shape.draw()
+                if shape.descriptions is not None:
+                    shape.render_description()
         return shapes
 
     def export_(self):
@@ -222,14 +237,27 @@ class Commands:
             command_args = command[self.command_stack_args_index]
             getattr(self, command_name)(*command_args)
 
-    def description(self, selected_shape, description, position, push_to_command_stack=True):
+    def description(self, selected_shapes, description, position, push_to_command_stack=True):
         """
         :param push_to_command_stack:
-        :param selected_shape:
+        :param selected_shapes:
         :param description:
         :param position:
         :return:
         """
-        print(selected_shape, description, position)
         if push_to_command_stack:
-            self.command_stack_push(COMMAND_DESCRIPTION, selected_shape, description, position, False)
+            self.command_stack_push(COMMAND_DESCRIPTION, selected_shapes, description, position, False)
+
+        for selected_shape in selected_shapes:
+            if not push_to_command_stack: #undo or redo triggered. Reset descriptions in Figure object to prevent double drawing
+                selected_shape.descriptions = None
+
+            if position == "Left":
+                selected_shape.set_description(Left(Description(description, self.canvas)))
+            elif position == "Right":
+                selected_shape.set_description(Right(Description(description, self.canvas)))
+            elif position == "Top":
+                selected_shape.set_description(Top(Description(description, self.canvas)))
+            elif position == "Bottom":
+                selected_shape.set_description(Bottom(Description(description, self.canvas)))
+            selected_shape.render_description()

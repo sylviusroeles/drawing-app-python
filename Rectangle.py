@@ -1,10 +1,9 @@
 from Figure import *
 from tkinter import BOTH
 
-
 class Rectangle(Figure):
 
-    name = 'rectangle'
+    shapeName = 'rectangle'
 
     def draw(self):
         """

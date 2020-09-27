@@ -13,17 +13,17 @@ class TestCommands(unittest.TestCase):
     def create_rectangle(self, canvas, coordinates=None):
         commands = Commands(canvas, self.current_shapes_list)
         if coordinates:
-            return commands.create(Rectangle.name, coordinates)
+            return commands.create(Rectangle.shapeName, coordinates)
         else:
-            return commands.create(Rectangle.name, [100, 100, 200, 200])
+            return commands.create(Rectangle.shapeName, [100, 100, 200, 200])
 
     def create_ellipse(self, canvas, coordinates=None):
         commands = Commands(canvas, self.current_shapes_list)
         if coordinates:
             # Allow overloading
-            return commands.create(Ellipse.name, coordinates)
+            return commands.create(Ellipse.shapeName, coordinates)
         else:
-            return commands.create(Ellipse.name, [200, 200, 300, 300])
+            return commands.create(Ellipse.shapeName, [200, 200, 300, 300])
 
     def test_create_rectangle_should_return_object(self):
         rectangle = self.create_rectangle(Canvas())
@@ -174,8 +174,8 @@ class TestCommands(unittest.TestCase):
     def test_function_undo_with_2_shapes_should_remove_one_from_canvas_and_move_stack_pointer(self):
         canvas = Canvas()
         commands = Commands(canvas, [])
-        commands.create(Ellipse.name, [50, 50, 100, 100])
-        commands.create(Rectangle.name, [300, 300, 400, 400])
+        commands.create(Ellipse.shapeName, [50, 50, 100, 100])
+        commands.create(Rectangle.shapeName, [300, 300, 400, 400])
         canvas.pack()
         self.assertEqual(2, len(canvas.find_all()))
         commands.undo()
@@ -193,8 +193,8 @@ class TestCommands(unittest.TestCase):
     def test_function_redo_should_redraw_2_shapes_after_doing_undo_on_2_shapes(self):
         canvas = Canvas()
         commands = Commands(canvas, [])
-        commands.create(Ellipse.name, [50, 50, 100, 100])
-        commands.create(Rectangle.name, [300, 300, 400, 400])
+        commands.create(Ellipse.shapeName, [50, 50, 100, 100])
+        commands.create(Rectangle.shapeName, [300, 300, 400, 400])
         canvas.pack()
         self.assertEqual(2, len(canvas.find_all()))
         commands.undo()
@@ -257,6 +257,16 @@ class TestCommands(unittest.TestCase):
         self.assertEqual(5, len(canvas.find_all()))
         output = Commands(canvas, shapes).export_()
         with open('shapes_and_groups.txt') as f:
+            _input = f.read()
+        self.assertEqual(len(output.split('\n')), len(_input.split('\n')))
+
+    def test_function_export__after_function_import__with_file_shapes_groups_and_ornaments_should_yield_same_file(self):
+        canvas = Canvas()
+        canvas.pack()
+        shapes = Commands(canvas, []).import_('shapes_groups_and_ornaments.txt')
+        self.assertEqual(5, len(canvas.find_all()))
+        output = Commands(canvas, shapes).export_()
+        with open('shapes_groups_and_ornaments.txt') as f:
             _input = f.read()
         self.assertEqual(len(output.split('\n')), len(_input.split('\n')))
 
