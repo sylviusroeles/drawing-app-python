@@ -317,6 +317,7 @@ class UserInterface:
             return
 
         for selected_shape in selected_shapes:
+            print(vars(selected_shape), [print(vars(x)) for x in self.group_list])
             if selected_shape in self.selected_shape:
                 self.selected_shape.remove(selected_shape)
             else:
@@ -364,12 +365,16 @@ class UserInterface:
         filename = askopenfilename()
         shapes = self.commands.set_current_shape_list(self.shapes_list).import_(filename)
         for shape in shapes:
-            if isinstance(shape, Group):
+            if type(shape) == Group:
                 self.group_list.append(shape)
             else:
                 self.shapes_list.append(shape)
 
     def _export(self):
+        """
+        Handles the export button click
+        :return:
+        """
         file = asksaveasfile('w', defaultextension='.txt')
         if file is None:
             return
@@ -417,8 +422,8 @@ class UserInterface:
         Handles the description
         :return:
         """
-        self.commands.set_current_shape_list(self.shapes_list).description(self.selected_shape, self.description_input.get(),
-                                                                    self.description_position.get())
+        self.commands.set_current_shape_list(self.shapes_list).ornament(self.selected_shape, self.description_input.get(),
+                                                                        self.description_position.get(), self.group_list)
         self.description_dialog_box.destroy()
 
     def remove(self, shape):

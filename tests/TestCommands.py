@@ -264,7 +264,7 @@ class TestCommands(unittest.TestCase):
         canvas = Canvas()
         canvas.pack()
         shapes = Commands(canvas, []).import_('shapes_groups_and_ornaments.txt')
-        self.assertEqual(5, len(canvas.find_all()))
+        self.assertEqual(8, len(canvas.find_all()))
         output = Commands(canvas, shapes).export_()
         with open('shapes_groups_and_ornaments.txt') as f:
             _input = f.read()

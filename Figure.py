@@ -12,7 +12,7 @@ class Figure:
     tag = None
     coordinates = None
     shape = None
-    descriptions = []
+    descriptions = None
 
     def __init__(self, coordinates=None, canvas=None, name=None, shape=None, strategy=None):
         """
@@ -24,6 +24,7 @@ class Figure:
         self.shape = shape
         self.coordinates = coordinates
         self.strategy = strategy
+        self.descriptions = []
 
     def accept(self, visitor):
         return visitor.visit(self)
@@ -64,6 +65,7 @@ class Figure:
         self.shape.name = self.name
         self.shape.tag = self.tag
         self.strategy.execute(self.shape)
+        self.render_description()
 
     def resize(self, visitor):
         """
@@ -114,7 +116,9 @@ class Figure:
         self.descriptions += [description]
 
     def render_description(self):
-
+        """
+        :return:
+        """
         for description in self.descriptions:
 
             for position in description.render():
@@ -137,5 +141,11 @@ class Figure:
                                            coordinates[Y1] + ((coordinates[Y2] - coordinates[Y1]) / 2)], description.render()[position], 270)
 
     def draw_description(self, coordinates, text, angle=0):
+        """
+        :param coordinates:
+        :param text:
+        :param angle:
+        :return:
+        """
         self.canvas.create_text(*coordinates, anchor=CENTER, text=text, angle=angle)
         self.canvas.pack()

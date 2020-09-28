@@ -10,3 +10,9 @@ class Bottom(Description):
 
     def render(self):
         return {"Bottom": self._description.render()}
+
+    def to_string(self):
+        """
+        :return:
+        """
+        return "bottom \"%s\"" % self._description.render()

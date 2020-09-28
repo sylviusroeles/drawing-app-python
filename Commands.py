@@ -24,6 +24,7 @@ class Commands:
         """
         self.canvas = canvas
         self.current_shape_list = current_shape_list
+        self.imported_groups = []
         self.TAG_ID = 1
 
         # stack for redo/undo
@@ -88,6 +89,9 @@ class Commands:
         """
         closest_shape = self.canvas.find_closest(coordinates[0], coordinates[1])
         if closest_shape:
+            if len(self.canvas.gettags(*closest_shape)) < 2:
+                return None
+
             selected_tag = self.canvas.gettags(*closest_shape)[self.TAG_ID]
             shape_object = None
 
@@ -185,28 +189,54 @@ class Commands:
             self.command_stack_pointer -= 1  # prevent negative stack pointer
         self.redraw_canvas()
 
-    def import_(self, filename):
+    def add_figures_to_shape_list(self, shape):
+        """
+        :param shape:
+        :return:
+        """
+        for figure in shape.get_all():
+            if type(figure) == Group:
+                if figure not in self.imported_groups:
+                    self.imported_groups += [figure]
+                self.add_figures_to_shape_list(figure)
+            else:
+                if figure not in self.current_shape_list:
+                    self.current_shape_list += [figure]
+
+    def import_(self, filename, push_to_command_stack=True):
         """
         Handles the import command
         :return:
         """
         shapes = IO(self.canvas).parse_file(filename)
-        self.current_shape_list += shapes
+
+        if push_to_command_stack:
+            self.command_stack_push(COMMAND_IMPORT, shapes, False)
+
+        for shape in shapes:
+            if type(shape) == Group:
+                if shape not in self.imported_groups:
+                    self.imported_groups += [shape]
+                self.add_figures_to_shape_list(shape)
+
         for shape in shapes:
             if isinstance(shape, Group):
                 for _shape in shape.get_all():
                     if isinstance(_shape, Group) or _shape.tag is None:
                         continue
                     _shape.draw()
-                    if _shape.descriptions is not None:
-                        _shape.render_description()
+                if shape.descriptions is not None:
+                    shape.render_description()
             else:
                 shape.draw()
                 if shape.descriptions is not None:
                     shape.render_description()
-        return shapes
+        return self.current_shape_list + self.imported_groups
 
     def export_(self):
+        """
+        :return:
+        """
         return IO(self.canvas).shapes_to_text(self.current_shape_list)
 
     def group(self, shapes, push_to_command_stack=True):
@@ -237,8 +267,27 @@ class Commands:
             command_args = command[self.command_stack_args_index]
             getattr(self, command_name)(*command_args)
 
-    def description(self, selected_shapes, description, position, push_to_command_stack=True):
+    @staticmethod
+    def replace_figure_with_group(shape_list, group_list):
         """
+        :param shape_list:
+        :param group_list:
+        :return:
+        """
+        new_shape_list = []
+        temp_shape_list = shape_list[:]
+        for shape in temp_shape_list[:]:
+            for group in group_list:
+                for group_shape in group.get_all():
+                    if group_shape is shape:
+                        temp_shape_list.remove(group_shape)
+                    if group not in new_shape_list:
+                        new_shape_list.insert(0, group)
+        return temp_shape_list + new_shape_list
+
+    def ornament(self, selected_shapes, description, position, group_list, push_to_command_stack=True):
+        """
+        :param group_list:
         :param push_to_command_stack:
         :param selected_shapes:
         :param description:
@@ -248,16 +297,16 @@ class Commands:
         if push_to_command_stack:
             self.command_stack_push(COMMAND_DESCRIPTION, selected_shapes, description, position, False)
 
-        for selected_shape in selected_shapes:
+        for selected_shape in self.replace_figure_with_group(selected_shapes, group_list):
             if not push_to_command_stack: #undo or redo triggered. Reset descriptions in Figure object to prevent double drawing
                 selected_shape.descriptions = None
 
             if position == "Left":
-                selected_shape.set_description(Left(Description(description, self.canvas)))
+                selected_shape.set_description(Left(Description(description)))
             elif position == "Right":
-                selected_shape.set_description(Right(Description(description, self.canvas)))
+                selected_shape.set_description(Right(Description(description)))
             elif position == "Top":
-                selected_shape.set_description(Top(Description(description, self.canvas)))
+                selected_shape.set_description(Top(Description(description)))
             elif position == "Bottom":
-                selected_shape.set_description(Bottom(Description(description, self.canvas)))
+                selected_shape.set_description(Bottom(Description(description)))
             selected_shape.render_description()

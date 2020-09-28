@@ -51,9 +51,13 @@ class IO:
                     self.command_chain.append(group)
                     groups_for_indentation[current_indentation + 4] = group
 
+                    if descriptions_for_next_shape:
+                        for description in descriptions_for_next_shape:
+                            group = self.add_description_to_shape(group, *description)
+                        descriptions_for_next_shape = []
+
                     if current_indentation in groups_for_indentation:
                         groups_for_indentation[current_indentation].add(group)
-                        descriptions_for_next_shape = []
 
                 elif commands[self.COMMAND_INDEX] == self.rectangle.shapeName:
                     rectangle = Figure(self.parse_coordinates(commands[1:]), self.canvas, self.rectangle.shapeName,
@@ -62,14 +66,13 @@ class IO:
 
                     if descriptions_for_next_shape:
                         for description in descriptions_for_next_shape:
-                            print(description, vars(rectangle))
-                            self.add_description_to_shape(rectangle, *description)
+                            rectangle = self.add_description_to_shape(rectangle, *description)
+                        descriptions_for_next_shape = []
 
                     if current_indentation in groups_for_indentation:
                         groups_for_indentation[current_indentation].add(rectangle)
                     else:
                         self.command_chain.append(rectangle)
-                        descriptions_for_next_shape = []
 
                 elif commands[self.COMMAND_INDEX] == self.ellipse.shapeName:
                     ellipse = Figure(self.parse_coordinates(commands[1:]), self.canvas, self.ellipse.shapeName,
@@ -78,14 +81,13 @@ class IO:
 
                     if descriptions_for_next_shape:
                         for description in descriptions_for_next_shape:
-                            print(description, vars(ellipse))
-                            self.add_description_to_shape(ellipse, *description)
+                            ellipse = self.add_description_to_shape(ellipse, *description)
+                        descriptions_for_next_shape = []
 
                     if current_indentation in groups_for_indentation:
                         groups_for_indentation[current_indentation].add(ellipse)
                     else:
                         self.command_chain.append(ellipse)
-                        descriptions_for_next_shape = []
 
                 elif commands[self.COMMAND_INDEX] == COMMAND_DESCRIPTION:
                     (position, text) = commands[1:]
@@ -93,7 +95,8 @@ class IO:
 
         return self.command_chain
 
-    def add_description_to_shape(self, shape, position, description):
+    @staticmethod
+    def add_description_to_shape(shape, position, description):
         """
         :param shape:
         :param position:
@@ -101,13 +104,13 @@ class IO:
         :return:
         """
         if position == "Left":
-            shape.set_description(Left(Description(description, self.canvas)))
+            shape.set_description(Left(Description(description)))
         elif position == "Right":
-            shape.set_description(Right(Description(description, self.canvas)))
+            shape.set_description(Right(Description(description)))
         elif position == "Top":
-            shape.set_description(Top(Description(description, self.canvas)))
+            shape.set_description(Top(Description(description)))
         elif position == "Bottom":
-            shape.set_description(Bottom(Description(description, self.canvas)))
+            shape.set_description(Bottom(Description(description)))
         return shape
 
     def shapes_to_text(self, shapes, indentation=0, lines=None):
@@ -124,6 +127,8 @@ class IO:
         indentation = indentation
         for shape in shapes:
             if isinstance(shape, Group):
+                for description in shape.descriptions:
+                    lines.append("%s%s %s" % (self.add_indentation(indentation), COMMAND_DESCRIPTION, description.to_string()))
                 lines.append("%sgroup %s" % (self.add_indentation(indentation), len(shape.get_all())))
                 indentation += 4
                 self.shapes_to_text(
@@ -131,6 +136,8 @@ class IO:
                     indentation,
                     lines)  # make sure to skip all nested groups to prevent more shapes being exported than displayed
             elif type(shape) == Figure:
+                for description in shape.descriptions:
+                    lines.append("%s%s %s" % (self.add_indentation(indentation), COMMAND_DESCRIPTION, description.to_string()))
                 lines.append(self.shape_to_command(shape, indentation))
         return '\n'.join(lines)
 

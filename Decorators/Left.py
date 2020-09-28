@@ -10,3 +10,9 @@ class Left(Description):
 
     def render(self):
         return {"Left": self._description.render()}
+
+    def to_string(self):
+        """
+        :return:
+        """
+        return "left \"%s\"" % self._description.render()

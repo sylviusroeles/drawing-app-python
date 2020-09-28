@@ -1,16 +1,13 @@
-from tkinter import W
 
 class Description(object):
 
     _description = None
-    _canvas = None
 
-    def __init__(self, description, canvas):
+    def __init__(self, description):
         """
         :param description:
         """
         self._description = description
-        self._canvas = canvas
 
     def get_description(self):
         """
@@ -23,3 +20,9 @@ class Description(object):
         :return:
         """
         return self._description
+
+    def to_string(self):
+        """
+        :return:
+        """
+        return self.to_string()
