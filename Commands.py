@@ -117,7 +117,7 @@ class Commands:
         """
         for shape in group.get_all():
             if isinstance(shape, Group):
-                self.get_shape_in_nested_group(shape, shape_object)
+                return self.get_shape_in_nested_group(shape, shape_object)
             elif shape.tag == shape_object.tag:
                 return group.get_all()
         return [shape_object]

@@ -317,7 +317,6 @@ class UserInterface:
             return
 
         for selected_shape in selected_shapes:
-            print(vars(selected_shape), [print(vars(x)) for x in self.group_list])
             if selected_shape in self.selected_shape:
                 self.selected_shape.remove(selected_shape)
             else:
