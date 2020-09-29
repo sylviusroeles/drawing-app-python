@@ -15,6 +15,7 @@ class IO:
     grammar = None
 
     def __init__(self, canvas):
+        #only accept the following command when importing:
         self.grammar = {
             'rectangle': [COMMAND_CREATE, 'rectangle'],
             'ellipse': [COMMAND_CREATE, 'ellipse'],
@@ -98,6 +99,7 @@ class IO:
     @staticmethod
     def add_description_to_shape(shape, position, description):
         """
+        Adds an ornament to a shape
         :param shape:
         :param position:
         :param description:
@@ -113,19 +115,32 @@ class IO:
             shape.set_description(Bottom(Description(description)))
         return shape
 
-    def shapes_to_text(self, shapes, indentation=0, lines=None):
+    def shapes_to_text(self, shapes, groups, indentation=0, parsed_figures=None, lines=None):
         """
+        Converts a figure to a shape
+        :param parsed_figures:
+        :param groups:
         :param lines:
         :param indentation:
         :param shapes:
         :return:
         """
+        if parsed_figures is None:
+            parsed_figures = []
+
         if lines is None:
             lines = []
         lines = lines
 
         indentation = indentation
-        for shape in shapes:
+
+        shape_list = []
+        if groups: #prioritize parsing of groups
+            shape_list += groups
+        if shapes:
+            shape_list += shapes
+
+        for shape in shape_list:
             if isinstance(shape, Group):
                 for description in shape.descriptions:
                     lines.append("%s%s %s" % (self.add_indentation(indentation), COMMAND_DESCRIPTION, description.to_string()))
@@ -133,16 +148,21 @@ class IO:
                 indentation += 4
                 self.shapes_to_text(
                     [_shapes for _shapes in shape.get_all() if type(_shapes) != Group],
+                    groups.remove(shape),
                     indentation,
+                    parsed_figures,
                     lines)  # make sure to skip all nested groups to prevent more shapes being exported than displayed
             elif type(shape) == Figure:
-                for description in shape.descriptions:
-                    lines.append("%s%s %s" % (self.add_indentation(indentation), COMMAND_DESCRIPTION, description.to_string()))
-                lines.append(self.shape_to_command(shape, indentation))
+                if shape not in parsed_figures:
+                    parsed_figures += [shape]
+                    for description in shape.descriptions:
+                        lines.append("%s%s %s" % (self.add_indentation(indentation), COMMAND_DESCRIPTION, description.to_string()))
+                    lines.append(self.shape_to_command(shape, indentation))
         return '\n'.join(lines)
 
     def shape_to_command(self, figure, indentation):
         """
+        Convert a figure to a command for export
         :param figure:
         :param indentation:
         :return:

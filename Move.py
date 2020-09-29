@@ -2,7 +2,9 @@ from FigureVisitor import *
 
 
 class Move(FigureVisitor):
-
+    """
+    Visitor pattern shape Move function
+    """
     coordinates = []
 
     def __init__(self, coordinates):

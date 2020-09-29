@@ -377,7 +377,7 @@ class UserInterface:
         file = asksaveasfile('w', defaultextension='.txt')
         if file is None:
             return
-        shapes = self.commands.set_current_shape_list(self.shapes_list).export_()
+        shapes = self.commands.set_current_shape_list(self.shapes_list).export_(shapes=self.shapes_list, groups=self.group_list)
         file.write(shapes)
         file.close()
 

@@ -1,5 +1,6 @@
 from Strategy import *
 from tkinter import CENTER
+import time
 
 X1 = 0
 Y1 = 1
@@ -25,6 +26,7 @@ class Figure:
         self.coordinates = coordinates
         self.strategy = strategy
         self.descriptions = []
+        self.description_figures = []
 
     def accept(self, visitor):
         return visitor.visit(self)
@@ -54,6 +56,8 @@ class Figure:
             coordinates[X1] - self.coordinates[X1],
             coordinates[Y1] - self.coordinates[Y1]
         )
+        self.coordinates = self.canvas.coords(self.canvas.find_withtag(self.tag))
+        self.redraw_descriptions()
 
     def draw(self):
         """
@@ -74,6 +78,7 @@ class Figure:
         """
         coordinates = visitor.coordinates
         self.canvas.coords(self.tag, coordinates[X1], coordinates[Y1], coordinates[X2], coordinates[Y2])
+        self.redraw_descriptions()
 
     @staticmethod
     def parse_coordinates(coordinates):
@@ -97,7 +102,7 @@ class Figure:
         coordinates = self.parse_coordinates(visitor.coordinates)
         return "%s %s" % (
             name,
-            ' '.join(coordinates)
+            ' '.join([str(coordinate).split('.')[0] for coordinate in coordinates]) #remove decimals
         )
 
     def get_description(self):
@@ -113,6 +118,9 @@ class Figure:
         :param description:
         :return:
         """
+        if not self.descriptions:
+            self.descriptions = []
+
         self.descriptions += [description]
 
     def render_description(self):
@@ -147,5 +155,16 @@ class Figure:
         :param angle:
         :return:
         """
-        self.canvas.create_text(*coordinates, anchor=CENTER, text=text, angle=angle)
+        tag = "%s%s%s" % ("description", text, str(round(time.time() * 1000)))
+        self.canvas.create_text(*coordinates, anchor=CENTER, text=text, angle=angle, tag=tag)
+        self.description_figures += [tag]
         self.canvas.pack()
+
+    def redraw_descriptions(self):
+        """
+        :return:
+        """
+        for description_figure in self.description_figures:
+            for shape in self.canvas.find_withtag(description_figure):
+                self.canvas.delete(shape)
+        self.render_description()

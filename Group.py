@@ -1,7 +1,7 @@
 from Figure import *
 
-class Group(Figure):
 
+class Group(Figure):
     descriptions = None
 
     def __init__(self, canvas):
@@ -40,6 +40,8 @@ class Group(Figure):
 
     def render_description(self):
         """
+        Similar to the render_description command in the Figure class,
+        but with additional coordinate parsing to make sure a description is shown for a group instead of a figure
         :return:
         """
         for description in self.descriptions:
@@ -53,12 +55,16 @@ class Group(Figure):
                 y2 = sum([shape.coordinates[Y2] for shape in self.shapes]) / len(self.shapes)
 
                 if position == "Bottom":
+                    #Reset the y axis to draw description in bottom middle position
                     y2 = max([shape.coordinates[Y2] for shape in self.shapes])
                 if position == "Top":
+                    #Reset the y axis to draw description in top middle position
                     y1 = min([shape.coordinates[Y1] for shape in self.shapes])
                 if position == "Right":
+                    #Reset the x axis to draw description in right middle position
                     x2 = max([shape.coordinates[X2] for shape in self.shapes])
                 if position == "Left":
+                    #Reset the y axis to draw description in left middle position
                     x1 = min([shape.coordinates[X1] for shape in self.shapes])
 
                 coordinates = [
@@ -76,7 +82,9 @@ class Group(Figure):
                                            coordinates[Y1] - 10], description.render()[position])
                 if position == "Left":
                     self.draw_description([coordinates[X1] - 10,
-                                           coordinates[Y1] + ((coordinates[Y2] - coordinates[Y1]) / 2)], description.render()[position], 90)
+                                           coordinates[Y1] + ((coordinates[Y2] - coordinates[Y1]) / 2)],
+                                          description.render()[position], 90)
                 if position == "Right":
                     self.draw_description([coordinates[X2] + 10,
-                                           coordinates[Y1] + ((coordinates[Y2] - coordinates[Y1]) / 2)], description.render()[position], 270)
+                                           coordinates[Y1] + ((coordinates[Y2] - coordinates[Y1]) / 2)],
+                                          description.render()[position], 270)

@@ -12,7 +12,6 @@ from Commands_Struct import *
 from Ellipse import *
 from Rectangle import *
 
-
 class Commands:
 
     rectangle = Rectangle()
@@ -79,6 +78,7 @@ class Commands:
         :param shape:
         :return:
         """
+        shape.descriptions = []
         shape.draw()
 
     def select(self, coordinates, group_list):
@@ -125,6 +125,7 @@ class Commands:
 
     def move(self, shapes_list, coordinates, push_to_command_stack=True):
         """
+        Execute the move command
         :param push_to_command_stack:
         :param shapes_list:
         :param coordinates:
@@ -191,6 +192,7 @@ class Commands:
 
     def add_figures_to_shape_list(self, shape):
         """
+        Sorts imported figures to groups and shapes
         :param shape:
         :return:
         """
@@ -211,13 +213,15 @@ class Commands:
         shapes = IO(self.canvas).parse_file(filename)
 
         if push_to_command_stack:
-            self.command_stack_push(COMMAND_IMPORT, shapes, False)
+            self.command_stack_push(COMMAND_IMPORT, filename, False)
 
         for shape in shapes:
             if type(shape) == Group:
                 if shape not in self.imported_groups:
                     self.imported_groups += [shape]
                 self.add_figures_to_shape_list(shape)
+            else:
+                self.current_shape_list += [shape]
 
         for shape in shapes:
             if isinstance(shape, Group):
@@ -233,11 +237,12 @@ class Commands:
                     shape.render_description()
         return self.current_shape_list + self.imported_groups
 
-    def export_(self):
+    def export_(self, shapes, groups):
         """
+        Execute the export command
         :return:
         """
-        return IO(self.canvas).shapes_to_text(self.current_shape_list)
+        return IO(self.canvas).shapes_to_text(shapes, groups)
 
     def group(self, shapes, push_to_command_stack=True):
         """
@@ -270,6 +275,7 @@ class Commands:
     @staticmethod
     def replace_figure_with_group(shape_list, group_list):
         """
+        Returns the group a figure is part of
         :param shape_list:
         :param group_list:
         :return:
@@ -287,6 +293,7 @@ class Commands:
 
     def ornament(self, selected_shapes, description, position, group_list, push_to_command_stack=True):
         """
+        Execute the description command
         :param group_list:
         :param push_to_command_stack:
         :param selected_shapes:
@@ -295,7 +302,7 @@ class Commands:
         :return:
         """
         if push_to_command_stack:
-            self.command_stack_push(COMMAND_DESCRIPTION, selected_shapes, description, position, False)
+            self.command_stack_push(COMMAND_DESCRIPTION, selected_shapes, description, position, group_list, False)
 
         for selected_shape in self.replace_figure_with_group(selected_shapes, group_list):
             if not push_to_command_stack: #undo or redo triggered. Reset descriptions in Figure object to prevent double drawing

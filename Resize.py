@@ -2,6 +2,9 @@ from FigureVisitor import *
 
 
 class Resize(FigureVisitor):
+    """
+    Visitor pattern shape Resize function
+    """
 
     coordinates = []
 

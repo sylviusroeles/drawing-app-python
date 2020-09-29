@@ -237,15 +237,22 @@ class TestCommands(unittest.TestCase):
         canvas = Canvas()
         canvas.pack()
         commands = Commands(canvas, [])
-        output = commands.export_()
+        output = commands.export_([], [])
         self.assertEqual("", output)
 
     def test_function_export__after_function_import__with_file_3_shapes_should_yield_same_file(self):
         canvas = Canvas()
         canvas.pack()
-        shapes = Commands(canvas, []).import_('3_shapes.txt')
+        _input = Commands(canvas, []).import_('3_shapes.txt')
+        groups = []
+        shapes = []
+        for shape in _input:
+            if type(shape) == Group:
+                groups.append(shape)
+            else:
+                shapes.append(shape)
         self.assertEqual(3, len(canvas.find_all()))
-        output = Commands(canvas, shapes).export_()
+        output = Commands(canvas, shapes).export_(shapes, groups)
         with open('3_shapes.txt') as f:
             _input = f.read()
         self.assertEqual(output, _input)
@@ -253,9 +260,16 @@ class TestCommands(unittest.TestCase):
     def test_function_export__after_function_import__with_file_shapes_and_groups_should_yield_same_file(self):
         canvas = Canvas()
         canvas.pack()
-        shapes = Commands(canvas, []).import_('shapes_and_groups.txt')
+        _input = Commands(canvas, []).import_('shapes_and_groups.txt')
         self.assertEqual(5, len(canvas.find_all()))
-        output = Commands(canvas, shapes).export_()
+        groups = []
+        shapes = []
+        for shape in _input:
+            if type(shape) == Group:
+                groups.append(shape)
+            else:
+                shapes.append(shape)
+        output = Commands(canvas, shapes).export_(shapes, groups)
         with open('shapes_and_groups.txt') as f:
             _input = f.read()
         self.assertEqual(len(output.split('\n')), len(_input.split('\n')))
@@ -263,9 +277,16 @@ class TestCommands(unittest.TestCase):
     def test_function_export__after_function_import__with_file_shapes_groups_and_ornaments_should_yield_same_file(self):
         canvas = Canvas()
         canvas.pack()
-        shapes = Commands(canvas, []).import_('shapes_groups_and_ornaments.txt')
+        _input = Commands(canvas, []).import_('shapes_groups_and_ornaments.txt')
         self.assertEqual(8, len(canvas.find_all()))
-        output = Commands(canvas, shapes).export_()
+        groups = []
+        shapes = []
+        for shape in _input:
+            if type(shape) == Group:
+                groups.append(shape)
+            else:
+                shapes.append(shape)
+        output = Commands(canvas, shapes).export_(shapes, groups)
         with open('shapes_groups_and_ornaments.txt') as f:
             _input = f.read()
         self.assertEqual(len(output.split('\n')), len(_input.split('\n')))
